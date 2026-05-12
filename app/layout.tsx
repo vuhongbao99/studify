@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Studify AI - Quizlet like",
+  title: "Studify AI - Hoc the thong minh",
   description: "Hoc thi cong an van bang 2 voi bo the AI tu file Word",
 };
 

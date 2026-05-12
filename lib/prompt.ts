@@ -1,5 +1,5 @@
 export const GENERATION_PROMPT_TEMPLATE = `Bạn là trợ lý tạo bộ ôn thi cho học viên thi công an văn bằng 2.
-Nhiệm vụ: chỉ dựa trên nội dung văn bản đầu vào, tạo bộ câu hỏi - trả lời để học theo kiểu Quizlet.
+Nhiệm vụ: chỉ dựa trên nội dung văn bản đầu vào, tạo bộ câu hỏi - trả lời để học theo kiểu thẻ học.
 
 Yêu cầu nghiêm ngặt:
 1) Chỉ dùng thông tin có trong văn bản. Nếu thiếu dữ kiện, bỏ qua ý đó, không suy đoán.

@@ -38,8 +38,8 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
+        <h2 className="text-xl font-bold text-slate-900">{title}</h2>
+        <label className="flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1.5 text-sm text-indigo-800">
           <input
             type="checkbox"
             checked={shuffleEnabled}
@@ -53,27 +53,30 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
         </label>
       </div>
 
-      <div className="h-2 w-full rounded-full bg-slate-200">
-        <div className="h-2 rounded-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} />
+      <div className="h-2.5 w-full rounded-full bg-indigo-100">
+        <div
+          className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-cyan-500 transition-all"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      <div className="rounded-2xl border bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-500">
+      <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-lg md:p-8">
+        <p className="text-sm font-medium text-slate-500">
           Câu {index + 1}/{activeCards.length}
         </p>
-        <p className="mt-3 text-lg font-semibold text-slate-900">{card.question}</p>
+        <p className="mt-4 text-xl font-semibold leading-relaxed text-slate-900 md:text-2xl">{card.question}</p>
         {showAnswer ? (
-          <div className="mt-4 space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-            <p className="font-medium text-emerald-900">{card.answer}</p>
-            <p className="text-sm text-emerald-800">{card.explanation}</p>
+          <div className="mt-5 space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-lg font-semibold text-emerald-900">{card.answer}</p>
+            <p className="text-sm leading-relaxed text-emerald-800">{card.explanation}</p>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setShowAnswer(true)}
-            className="mt-5 rounded-lg border border-sky-200 px-4 py-2 text-sm font-medium text-sky-700 hover:bg-sky-50"
+            className="mt-6 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
           >
-            Hiện đáp án
+            Lật thẻ
           </button>
         )}
       </div>
@@ -82,16 +85,16 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
         <button
           type="button"
           onClick={previous}
-          className="flex-1 rounded-lg border px-4 py-2 font-medium text-slate-700 hover:bg-slate-100"
+          className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
         >
-          Quay lại
+          Trước
         </button>
         <button
           type="button"
           onClick={next}
-          className="flex-1 rounded-lg bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-700"
+          className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 font-semibold text-white transition hover:bg-indigo-700"
         >
-          Tiếp theo
+          Sau
         </button>
       </div>
     </section>

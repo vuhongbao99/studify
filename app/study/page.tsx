@@ -25,13 +25,13 @@ export default async function StudyPage({
   );
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 md:px-8">
+    <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-10">
       <div className="space-y-2">
-        <Link href="/lessons" className="text-sm font-medium text-sky-700 hover:underline">
+        <Link href="/lessons" className="text-sm font-semibold text-indigo-700 hover:underline">
           ← Quay lại chọn bài
         </Link>
         <h1 className="text-3xl font-bold text-slate-900">Học gộp nhiều bài</h1>
-        <p className="text-slate-600">{lessons.length} bài được chọn cho một phiên học.</p>
+        <p className="text-slate-600">{lessons.length} bài đang được gộp cho một phiên học.</p>
       </div>
       <StudyPlayer cards={cards} title="Phiên học tổng hợp" />
     </main>

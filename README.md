@@ -1,6 +1,6 @@
 # Studify AI
 
-Ung dung hoc thi cong an van bang 2 theo kieu Quizlet, tu dong tao bo cau hoi/tra loi tu file Word `.docx` bang Gemini API.
+Ung dung hoc thi cong an van bang 2 theo kieu the hoc, tu dong tao bo cau hoi/tra loi tu file Word `.docx` bang Gemini API.
 
 ## Cong nghe
 
