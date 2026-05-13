@@ -86,12 +86,32 @@ export async function getLessons(): Promise<Lesson[]> {
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
     .from("lessons")
-    .select("*")
+    .select("id, title, source_filename, source_summary, created_at, cards(count)")
     .order("created_at", { ascending: false });
 
   if (error && isMissingTableError(error.message)) return [];
   if (error) throw new Error(error.message);
-  return (data ?? []) as Lesson[];
+
+  type Row = Lesson & { cards?: { count: number }[] | null };
+  return (data ?? []).map((row) => {
+    const r = row as Row;
+    const nested = r.cards;
+    const raw = Array.isArray(nested) && nested[0] ? (nested[0] as { count?: number | string }).count : undefined;
+    const count =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string"
+          ? Number.parseInt(raw, 10) || 0
+          : 0;
+    return {
+      id: r.id,
+      title: r.title,
+      source_filename: r.source_filename,
+      source_summary: r.source_summary,
+      created_at: r.created_at,
+      card_count: count,
+    } as Lesson;
+  });
 }
 
 export async function getLessonById(lessonId: string): Promise<LessonWithCards | null> {

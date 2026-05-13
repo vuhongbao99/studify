@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { LessonDeleteButton } from "@/components/lesson-delete-button";
+import { PageContainer } from "@/components/page-container";
 import { StudyPlayer } from "@/components/study-player";
 import { getLessonById } from "@/lib/study-store";
 
@@ -19,20 +20,23 @@ export default async function LessonDetailPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-10">
+    <PageContainer variant="study" className="space-y-6">
       <div className="space-y-3">
-        <Link href="/lessons" className="text-sm font-semibold text-indigo-700 hover:underline dark:text-indigo-300">
-          ← Quay lại danh sách bài học
-        </Link>
+        <BreadcrumbNav items={[{ label: "Thư viện", href: "/lessons" }, { label: lesson.title }]} />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{lesson.title}</h1>
-            <p className="max-w-3xl text-slate-600 dark:text-slate-300">{lesson.source_summary}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 md:text-3xl">
+              {lesson.title}
+            </h1>
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{lesson.source_summary}</p>
+            <p className="text-xs font-medium text-slate-400">
+              {lesson.cards.length} câu · {lesson.source_filename}
+            </p>
           </div>
           <LessonDeleteButton lessonId={lesson.id} lessonTitle={lesson.title} variant="detail" />
         </div>
       </div>
-      <StudyPlayer cards={lesson.cards} title="Luyện theo bài học" />
-    </main>
+      <StudyPlayer cards={lesson.cards} title={lesson.title} />
+    </PageContainer>
   );
 }

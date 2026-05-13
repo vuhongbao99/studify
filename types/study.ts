@@ -18,6 +18,8 @@ export interface Lesson {
   source_filename: string;
   source_summary: string;
   created_at: string;
+  /** Số thẻ/câu hỏi, khi query kèm cards(count) */
+  card_count?: number;
 }
 
 export interface LessonWithCards extends Lesson {

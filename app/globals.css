@@ -1,12 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef2ff;
+  --canvas: #f6f7fb;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
   --foreground: #0f172a;
+  --foreground-muted: #64748b;
+  --primary: #4257d8;
+  --primary-hover: #3546b5;
+  --radius-card: 1rem;
+
+  --background: var(--canvas);
+  --color-background: var(--canvas);
+  --color-foreground: var(--foreground);
 }
 
 @theme inline {
-  --color-background: var(--background);
+  --color-background: var(--canvas);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -14,16 +26,58 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --canvas: #0f1419;
+    --surface: #1a222c;
+    --surface-elevated: #232d3b;
+    --surface-muted: #151b22;
+    --border-subtle: #334155;
+    --foreground: #f1f5f9;
+    --foreground-muted: #94a3b8;
+    --primary: #5c7cfa;
+    --primary-hover: #7b93fc;
+    --radius-card: 1rem;
+
+    --background: var(--canvas);
+    --color-background: var(--canvas);
+    --color-foreground: var(--foreground);
   }
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, #dbeafe 0%, transparent 40%),
-    radial-gradient(circle at top right, #ede9fe 0%, transparent 45%),
-    var(--background);
+  margin: 0;
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(ellipse 80% 55% at 50% -15%, rgb(165 180 252 / 0.12), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 0%, rgb(56 189 248 / 0.06), transparent);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image:
+      radial-gradient(ellipse 80% 55% at 50% -15%, rgb(92 124 250 / 0.08), transparent),
+      radial-gradient(ellipse 50% 40% at 100% 0%, rgb(56 189 248 / 0.05), transparent);
+  }
+}
+
+/* Design tokens usable from arbitrary values in JSX: arbitrary property or style */
+:root {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

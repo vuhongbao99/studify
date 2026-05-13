@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
+import { PageContainer } from "@/components/page-container";
 import { StudyPlayer } from "@/components/study-player";
 import { combineCardsByLesson } from "@/lib/combine";
 import { getLessonById } from "@/lib/study-store";
@@ -24,16 +26,24 @@ export default async function StudyPage({
     })),
   );
 
+  const title =
+    lessons.length === 1 ? lessons[0]!.title : `Gộp ${lessons.length} bài`;
+
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-10">
-      <div className="space-y-2">
-        <Link href="/lessons" className="text-sm font-semibold text-indigo-700 hover:underline">
-          ← Quay lại chọn bài
-        </Link>
-        <h1 className="text-3xl font-bold text-slate-900">Học gộp nhiều bài</h1>
-        <p className="text-slate-600">{lessons.length} bài đang được gộp cho một phiên học.</p>
+    <PageContainer variant="study" className="space-y-6">
+      <div className="space-y-3">
+        <BreadcrumbNav items={[{ label: "Thư viện", href: "/lessons" }, { label: "Học gộp" }]} />
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50 md:text-3xl">
+          {title}
+        </h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          {lessons.length} bài đang gộp trong một phiên học.{" "}
+          <Link href="/lessons" className="font-semibold text-[var(--color-primary)] hover:underline">
+            Chọn lại
+          </Link>
+        </p>
       </div>
-      <StudyPlayer cards={cards} title="Phiên học tổng hợp" />
-    </main>
+      <StudyPlayer cards={cards} title="Phiên ôn tập" />
+    </PageContainer>
   );
 }
