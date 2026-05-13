@@ -8,6 +8,8 @@ import type { Card } from "@/types/study";
 
 const TF_LABELS = ["Đúng", "Sai"] as const;
 
+type StudyMode = "flashcards" | "quiz";
+
 interface StudyPlayerProps {
   cards: Card[];
   title: string;
@@ -35,6 +37,7 @@ function ShuffleIcon() {
 }
 
 export function StudyPlayer({ cards, title }: StudyPlayerProps) {
+  const [studyMode, setStudyMode] = useState<StudyMode>("flashcards");
   const [index, setIndex] = useState(0);
   const [showFlipAnswer, setShowFlipAnswer] = useState(false);
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
@@ -42,33 +45,47 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
 
-  const activeCards = useMemo(
+  const masterOrder = useMemo(
     () => (shuffleEnabled ? shuffleCards(cards, 2026) : cards),
     [cards, shuffleEnabled],
   );
-  const card = activeCards[index];
-  const progressPct =
-    activeCards.length === 0 ? 0 : Math.round(((index + 1) / activeCards.length) * 100);
-  const quizCardsTotal = useMemo(
-    () => activeCards.filter((item) => isQuizCard(item)).length,
-    [activeCards],
-  );
+
+  const deck = useMemo(() => {
+    if (studyMode === "quiz") return masterOrder.filter((c) => isQuizCard(c));
+    return masterOrder;
+  }, [masterOrder, studyMode]);
+
+  const card = deck[index];
+  const progressPct = deck.length === 0 ? 0 : Math.round(((index + 1) / deck.length) * 100);
+  const quizCountAll = useMemo(() => masterOrder.filter((c) => isQuizCard(c)).length, [masterOrder]);
+
+  const resetCardState = useCallback(() => {
+    setShowFlipAnswer(false);
+    setSelected(null);
+  }, []);
+
+  const goToMode = useCallback((mode: StudyMode) => {
+    setStudyMode(mode);
+    setIndex(0);
+    setShowFlipAnswer(false);
+    setSelected(null);
+    setCorrectCount(0);
+    setWrongCount(0);
+  }, []);
 
   const toggleFlipOpen = useCallback(() => {
     setShowFlipAnswer((value) => !value);
   }, []);
 
-  useSpaceToFlip(toggleFlipOpen, Boolean(card?.question_type === "open"));
+  useSpaceToFlip(toggleFlipOpen, studyMode === "flashcards" && Boolean(card));
 
   function next() {
-    setShowFlipAnswer(false);
-    setSelected(null);
-    setIndex((current) => Math.min(current + 1, Math.max(activeCards.length - 1, 0)));
+    resetCardState();
+    setIndex((current) => Math.min(current + 1, Math.max(deck.length - 1, 0)));
   }
 
   function previous() {
-    setShowFlipAnswer(false);
-    setSelected(null);
+    resetCardState();
     setIndex((current) => Math.max(current - 1, 0));
   }
 
@@ -82,7 +99,7 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
     }
   }
 
-  if (!card) {
+  if (cards.length === 0) {
     return (
       <p className="rounded-[var(--radius-card)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-10 text-center text-slate-500">
         Chưa có câu hỏi nào.
@@ -90,16 +107,41 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
     );
   }
 
-  const isQuiz = isQuizCard(card);
+  if (deck.length === 0) {
+    return (
+      <section className="space-y-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 dark:bg-[var(--color-surface-elevated)]">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">{title}</h2>
+        <p className="text-slate-600 dark:text-slate-300">
+          Bài này không có câu trắc nghiệm hay đúng / sai. Hãy học bằng chế độ{" "}
+          <strong>Flashcards</strong>.
+        </p>
+        <button
+          type="button"
+          onClick={() => goToMode("flashcards")}
+          className="rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:brightness-105"
+        >
+          Chuyển sang Flashcards
+        </button>
+      </section>
+    );
+  }
+
+  if (!card) {
+    return null;
+  }
+
+  const isQuiz = studyMode === "quiz" && isQuizCard(card);
   const showResult = isQuiz && selected !== null;
   const wasCorrect = Boolean(showResult && selected && isAnswerCorrect(card, selected));
 
   const typeBadge =
-    card.question_type === "mcq"
-      ? "Trắc nghiệm"
-      : card.question_type === "true_false"
-        ? "Đúng / Sai"
-        : "Thẻ";
+    studyMode === "flashcards"
+      ? "Flashcards"
+      : card.question_type === "mcq"
+        ? "Trắc nghiệm"
+        : card.question_type === "true_false"
+          ? "Đúng / Sai"
+          : "Thẻ";
 
   return (
     <section className="space-y-6">
@@ -109,29 +151,64 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 md:text-2xl">
               {title}
             </h2>
-            {quizCardsTotal > 0 ? (
+            {studyMode === "quiz" && quizCountAll > 0 ? (
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Đếm đúng / sai cho các câu trắc nghiệm và đúng—sai trong phiên này.
+                Chọn đáp án đúng; điểm đúng / sai chỉ áp dụng ở chế độ này.
+              </p>
+            ) : studyMode === "flashcards" ? (
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Lật thẻ để xem đáp án (Space hoặc chạm). Gồm mọi câu trong bài.
               </p>
             ) : null}
           </div>
-          <label className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:bg-[var(--color-surface-elevated)] dark:text-slate-200">
-            <input
-              type="checkbox"
-              checked={shuffleEnabled}
-              onChange={(event) => {
-                setShuffleEnabled(event.target.checked);
-                setShowFlipAnswer(false);
-                setSelected(null);
-                setCorrectCount(0);
-                setWrongCount(0);
-                setIndex(0);
-              }}
-              className="size-4 rounded border-slate-300"
-            />
-            <ShuffleIcon />
-            <span>Trộn</span>
-          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1 dark:bg-slate-800/80"
+              role="group"
+              aria-label="Chế độ học"
+            >
+              <button
+                type="button"
+                onClick={() => goToMode("flashcards")}
+                className={
+                  studyMode === "flashcards"
+                    ? "rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-primary)] shadow-sm dark:bg-slate-900"
+                    : "rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                }
+              >
+                Flashcards
+              </button>
+              <button
+                type="button"
+                onClick={() => goToMode("quiz")}
+                disabled={quizCountAll === 0}
+                className={
+                  studyMode === "quiz"
+                    ? "rounded-full bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-primary)] shadow-sm dark:bg-slate-900"
+                    : "rounded-full px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-45 dark:text-slate-400 dark:hover:text-slate-100"
+                }
+                title={quizCountAll === 0 ? "Không có câu trắc nghiệm / đúng sai" : undefined}
+              >
+                Trắc nghiệm
+              </button>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:bg-[var(--color-surface-elevated)] dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={shuffleEnabled}
+                onChange={(event) => {
+                  setShuffleEnabled(event.target.checked);
+                  setIndex(0);
+                  resetCardState();
+                  setCorrectCount(0);
+                  setWrongCount(0);
+                }}
+                className="size-4 rounded border-slate-300"
+              />
+              <ShuffleIcon />
+              <span>Trộn</span>
+            </label>
+          </div>
         </div>
 
         <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200/90 dark:bg-slate-700/80">
@@ -147,24 +224,35 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
               {typeBadge}
             </span>
             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Câu {index + 1} trong {activeCards.length}
+              {studyMode === "quiz" ? "Câu hỏi " : "Thẻ "}
+              {index + 1} / {deck.length}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/50 dark:text-rose-200">
-              <span aria-hidden>✗</span>
-              {wrongCount}
-            </span>
-            <span className="inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-200">
-              <span aria-hidden>✓</span>
-              {correctCount}
-            </span>
-          </div>
+          {studyMode === "quiz" ? (
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/50 dark:text-rose-200">
+                <span aria-hidden>✗</span>
+                {wrongCount}
+              </span>
+              <span className="inline-flex min-h-11 min-w-[5.75rem] items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-200">
+                <span aria-hidden>✓</span>
+                {correctCount}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
       <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xl shadow-slate-900/[0.06] dark:bg-[var(--color-surface-elevated)] md:p-8">
-        {card.question_type === "open" ? (
+        {studyMode === "flashcards" ? (
+          <StudyFlipCard
+            question={card.question}
+            answer={card.answer}
+            explanation={card.explanation}
+            flipped={showFlipAnswer}
+            onFlip={toggleFlipOpen}
+          />
+        ) : card.question_type === "open" ? (
           <StudyFlipCard
             question={card.question}
             answer={card.answer}
@@ -279,7 +367,7 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
           onClick={previous}
           disabled={index <= 0}
           className="flex size-14 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-primary)] shadow-md transition enabled:hover:border-[var(--color-primary)] enabled:hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[var(--color-surface-elevated)]"
-          aria-label="Câu trước"
+          aria-label="Trước"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
@@ -293,15 +381,15 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
         </button>
 
         <span className="min-w-[5.5rem] text-center text-lg font-bold tabular-nums text-slate-800 dark:text-slate-100">
-          {index + 1} / {activeCards.length}
+          {index + 1} / {deck.length}
         </span>
 
         <button
           type="button"
           onClick={next}
-          disabled={index >= activeCards.length - 1}
+          disabled={index >= deck.length - 1}
           className="flex size-14 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-primary)] shadow-md transition enabled:hover:border-[var(--color-primary)] enabled:hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-40 dark:bg-[var(--color-surface-elevated)]"
-          aria-label="Câu tiếp theo"
+          aria-label="Tiếp theo"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
