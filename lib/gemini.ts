@@ -29,7 +29,8 @@ const generatedCardSchema = z
 
 const generatedLessonSchema = z.object({
   lesson_title: z.string().min(5).max(120),
-  source_summary: z.string().min(10).max(600),
+  /** Model đôi khi tóm tắt dài; Postgres `text` không giới hạn thực tế */
+  source_summary: z.string().min(10).max(5000),
   cards: z.array(generatedCardSchema).min(20).max(40),
 });
 

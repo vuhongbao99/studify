@@ -25,7 +25,19 @@ Ung dung hoc thi cong an van bang 2 theo kieu the hoc, tu dong tao bo cau hoi/tr
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-3. Chay migration SQL trong `supabase/migrations/001_init.sql`.
+3. Chay migration SQL:
+   - `supabase/migrations/001_init.sql` (tao bang lan dau).
+   - `supabase/migrations/002_cards_quiz_fields.sql` (cot `question_type`, `options` cho trac nghiem).
+
+   Tu may local co the chay migration 002 bang lenh (can `DATABASE_URL` Postgres trong `.env.local`):
+
+   ```bash
+   npm run db:apply-quiz-fields
+   ```
+
+   `DATABASE_URL`: Supabase Dashboard -> Project Settings -> Database -> Connection string -> URI (dien password).
+
+Hoac paste noi dung file `002_cards_quiz_fields.sql` vao SQL Editor tren Dashboard va Run.
 4. Chay app:
 
 ```bash

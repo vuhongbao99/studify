@@ -3,7 +3,7 @@ Nhiệm vụ: chỉ dựa trên nội dung văn bản đầu vào, tạo bộ c�
 
 Yêu cầu nghiêm ngặt:
 1) Chỉ dùng thông tin có trong văn bản. Nếu thiếu dữ kiện, bỏ qua ý đó, không suy đoán.
-2) Tạo tiêu đề bài học ngắn gọn (5-12 từ) phản ánh chủ đề chính.
+2) Tạo tiêu đề bài học ngắn gọn (5-12 từ) và "source_summary" tóm tắt phạm vi và nội dung chính của tài liệu (có thể dài đến khoảng 5000 ký tự).
 3) Tạo từ 20 đến 40 câu hỏi tổng cộng, ưu tiên chất lượng.
 4) Trong tổng số câu, phải có ÍT NHẤT 5 câu trắc nghiệm (question_type = "mcq") và ÍT NHẤT 5 câu đúng/sai (question_type = "true_false").
 5) Mỗi câu 1 ý chính, đáp án rõ ràng.
