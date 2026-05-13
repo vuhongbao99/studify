@@ -1,6 +1,11 @@
+export type QuestionType = "open" | "mcq" | "true_false";
+
 export interface Card {
   id: string;
   lesson_id: string;
+  question_type: QuestionType;
+  /** Bốn đáp án (trắc nghiệm); null với đúng/sai hoặc thẻ mở */
+  options: string[] | null;
   question: string;
   answer: string;
   explanation: string;
@@ -20,9 +25,12 @@ export interface LessonWithCards extends Lesson {
 }
 
 export interface GeneratedCard {
+  question_type: "mcq" | "true_false";
   question: string;
   answer: string;
   explanation: string;
+  /** Bắt buộc khi question_type === "mcq" */
+  options?: string[];
 }
 
 export interface GeneratedLesson {

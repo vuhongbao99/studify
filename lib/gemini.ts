@@ -1,21 +1,36 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { z } from "zod";
 import { buildGenerationPrompt } from "@/lib/prompt";
+import {
+  assertValidGeneratedCard,
+  validateGeneratedCardMix,
+} from "@/lib/quiz-shared";
 import type { GeneratedLesson } from "@/types/study";
+
+const generatedCardSchema = z
+  .object({
+    question_type: z.enum(["mcq", "true_false"]),
+    question: z.string().min(10).max(320),
+    answer: z.string().min(1).max(320),
+    explanation: z.string().min(10).max(500),
+    options: z.array(z.string()).length(4).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.question_type === "mcq") {
+      if (!data.options || data.options.length !== 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "mcq items must include options[4].",
+          path: ["options"],
+        });
+      }
+    }
+  });
 
 const generatedLessonSchema = z.object({
   lesson_title: z.string().min(5).max(120),
   source_summary: z.string().min(10).max(600),
-  cards: z
-    .array(
-      z.object({
-        question: z.string().min(10).max(220),
-        answer: z.string().min(5).max(320),
-        explanation: z.string().min(10).max(500),
-      }),
-    )
-    .min(10)
-    .max(45),
+  cards: z.array(generatedCardSchema).min(20).max(40),
 });
 
 export async function generateLessonFromText(rawText: string): Promise<GeneratedLesson> {
@@ -46,11 +61,16 @@ export async function generateLessonFromText(rawText: string): Promise<Generated
             items: {
               type: Type.OBJECT,
               properties: {
+                question_type: { type: Type.STRING },
                 question: { type: Type.STRING },
                 answer: { type: Type.STRING },
                 explanation: { type: Type.STRING },
+                options: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
               },
-              required: ["question", "answer", "explanation"],
+              required: ["question_type", "question", "answer", "explanation"],
             },
           },
         },
@@ -60,5 +80,10 @@ export async function generateLessonFromText(rawText: string): Promise<Generated
   });
 
   const parsed = JSON.parse(response.text ?? "{}");
-  return generatedLessonSchema.parse(parsed);
+  const lesson = generatedLessonSchema.parse(parsed);
+  validateGeneratedCardMix(lesson.cards);
+  for (const card of lesson.cards) {
+    assertValidGeneratedCard(card);
+  }
+  return lesson;
 }

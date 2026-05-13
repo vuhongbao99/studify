@@ -8,6 +8,8 @@ const sampleCards: Card[] = [
   {
     id: "1",
     lesson_id: "l1",
+    question_type: "open",
+    options: null,
     question: "Q1",
     answer: "A1",
     explanation: "E1",
@@ -16,6 +18,8 @@ const sampleCards: Card[] = [
   {
     id: "2",
     lesson_id: "l1",
+    question_type: "open",
+    options: null,
     question: "Q2",
     answer: "A2",
     explanation: "E2",

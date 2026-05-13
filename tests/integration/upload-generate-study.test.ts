@@ -10,8 +10,9 @@ describe("upload-generate-study flow contract", () => {
 
   it("requires strict JSON keys in prompt", () => {
     const prompt = buildGenerationPrompt("abc");
-    expect(prompt).toContain("\"lesson_title\"");
-    expect(prompt).toContain("\"source_summary\"");
-    expect(prompt).toContain("\"cards\"");
+    expect(prompt).toContain('"lesson_title"');
+    expect(prompt).toContain('"source_summary"');
+    expect(prompt).toContain('"cards"');
+    expect(prompt).toContain("question_type");
   });
 });

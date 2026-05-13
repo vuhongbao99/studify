@@ -1,6 +1,22 @@
 import { getSupabaseServerClient } from "@/lib/supabase";
 import type { Card, GeneratedLesson, Lesson, LessonWithCards } from "@/types/study";
 
+function parseCardRow(row: Record<string, unknown>): Card {
+  const optionsRaw = row.options;
+  let options: string[] | null = null;
+  if (Array.isArray(optionsRaw)) {
+    options = optionsRaw.map((item) => String(item));
+  }
+  const qt = row.question_type;
+  const questionType =
+    qt === "mcq" || qt === "true_false" || qt === "open" ? qt : "open";
+  return {
+    ...(row as unknown as Card),
+    question_type: questionType,
+    options,
+  };
+}
+
 function isMissingTableError(message: string) {
   return message.includes("Could not find the table");
 }
@@ -33,6 +49,11 @@ export async function createLessonFromGenerated(
     .insert(
       generated.cards.map((card) => ({
         lesson_id: lesson.id,
+        question_type: card.question_type,
+        options:
+          card.question_type === "mcq"
+            ? card.options?.map((option) => option.trim()) ?? null
+            : null,
         question: card.question.trim(),
         answer: card.answer.trim(),
         explanation: card.explanation.trim(),
@@ -47,7 +68,18 @@ export async function createLessonFromGenerated(
     throw new Error(cardsError?.message ?? "Failed to create cards.");
   }
 
-  return { ...lesson, cards: cards as Card[] };
+  return { ...lesson, cards: (cards as Record<string, unknown>[]).map(parseCardRow) };
+}
+
+export async function deleteLesson(lessonId: string): Promise<void> {
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from("lessons").delete().eq("id", lessonId);
+  if (error) {
+    if (error.message && isMissingTableError(error.message)) {
+      throw new Error("Missing Supabase tables. Run SQL migration 001_init.sql first.");
+    }
+    throw new Error(error.message);
+  }
 }
 
 export async function getLessons(): Promise<Lesson[]> {
@@ -76,7 +108,11 @@ export async function getLessonById(lessonId: string): Promise<LessonWithCards |
     throw new Error(error.message);
   }
 
-  return lesson as LessonWithCards;
+  const raw = lesson as LessonWithCards & {
+    cards?: Record<string, unknown>[];
+  };
+  const cards = (raw.cards ?? []).map((row) => parseCardRow(row as unknown as Record<string, unknown>));
+  return { ...(raw as Lesson), cards };
 }
 
 export async function getCardsForLessons(lessonIds: string[]): Promise<Card[]> {
@@ -88,5 +124,5 @@ export async function getCardsForLessons(lessonIds: string[]): Promise<Card[]> {
     .order("created_at", { ascending: true });
   if (error && isMissingTableError(error.message)) return [];
   if (error) throw new Error(error.message);
-  return (data ?? []) as Card[];
+  return (data ?? []).map((row) => parseCardRow(row as Record<string, unknown>));
 }
