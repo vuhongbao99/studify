@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase";
+import { normalizeCardForDb, type CardUpsertPayload } from "@/lib/card-payload";
 import type { Card, GeneratedLesson, Lesson, LessonWithCards } from "@/types/study";
 
 function parseCardRow(row: Record<string, unknown>): Card {
@@ -131,7 +132,9 @@ export async function getLessonById(lessonId: string): Promise<LessonWithCards |
   const raw = lesson as LessonWithCards & {
     cards?: Record<string, unknown>[];
   };
-  const cards = (raw.cards ?? []).map((row) => parseCardRow(row as unknown as Record<string, unknown>));
+  const cards = (raw.cards ?? [])
+    .map((row) => parseCardRow(row as unknown as Record<string, unknown>))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   return { ...(raw as Lesson), cards };
 }
 
@@ -145,4 +148,67 @@ export async function getCardsForLessons(lessonIds: string[]): Promise<Card[]> {
   if (error && isMissingTableError(error.message)) return [];
   if (error) throw new Error(error.message);
   return (data ?? []).map((row) => parseCardRow(row as Record<string, unknown>));
+}
+
+export async function createCardRecord(lessonId: string, payload: CardUpsertPayload): Promise<Card> {
+  const supabase = getSupabaseServerClient();
+  const normalized = normalizeCardForDb(payload);
+  const { data, error } = await supabase
+    .from("cards")
+    .insert({
+      lesson_id: lessonId,
+      question_type: normalized.question_type,
+      question: normalized.question,
+      answer: normalized.answer,
+      explanation: normalized.explanation,
+      options: normalized.options,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isMissingTableError(error.message)) {
+      throw new Error("Missing Supabase tables. Run SQL migrations first.");
+    }
+    throw new Error(error.message);
+  }
+  return parseCardRow(data as Record<string, unknown>);
+}
+
+export async function updateCardRecord(lessonId: string, cardId: string, payload: CardUpsertPayload): Promise<Card> {
+  const supabase = getSupabaseServerClient();
+  const normalized = normalizeCardForDb(payload);
+  const { data, error } = await supabase
+    .from("cards")
+    .update({
+      question_type: normalized.question_type,
+      question: normalized.question,
+      answer: normalized.answer,
+      explanation: normalized.explanation,
+      options: normalized.options,
+    })
+    .eq("id", cardId)
+    .eq("lesson_id", lessonId)
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isMissingTableError(error.message)) {
+      throw new Error("Missing Supabase tables. Run SQL migrations first.");
+    }
+    if (error.code === "PGRST116") throw new Error("Card not found.");
+    throw new Error(error.message);
+  }
+  return parseCardRow(data as Record<string, unknown>);
+}
+
+export async function deleteCardRecord(lessonId: string, cardId: string): Promise<void> {
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from("cards").delete().eq("id", cardId).eq("lesson_id", lessonId);
+  if (error) {
+    if (isMissingTableError(error.message)) {
+      throw new Error("Missing Supabase tables. Run SQL migrations first.");
+    }
+    throw new Error(error.message);
+  }
 }

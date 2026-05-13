@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { BreadcrumbNav } from "@/components/breadcrumb-nav";
+import { LessonDeckEditor } from "@/components/lesson-deck-editor";
 import { LessonDeleteButton } from "@/components/lesson-delete-button";
 import { PageContainer } from "@/components/page-container";
 import { StudyPlayer } from "@/components/study-player";
@@ -37,6 +38,7 @@ export default async function LessonDetailPage({
         </div>
       </div>
       <StudyPlayer cards={lesson.cards} title={lesson.title} />
+      <LessonDeckEditor lessonId={lesson.id} lessonTitle={lesson.title} initialCards={lesson.cards} />
     </PageContainer>
   );
 }

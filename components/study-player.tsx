@@ -23,9 +23,16 @@ function isAnswerCorrect(card: Card, picked: string) {
   return normalizeComparable(picked) === normalizeComparable(card.answer);
 }
 
-function ShuffleIcon() {
+function ShuffleIcon({ className }: { className?: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="opacity-80" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className ?? "opacity-80"}
+      aria-hidden
+    >
       <path
         d="M18 4h-3a4 4 0 0 0-3.5 6M6 20h3a4 4 0 0 0 3.5-6M6 4l-2 4h4M18 20l2-4h-4"
         stroke="currentColor"
@@ -36,18 +43,33 @@ function ShuffleIcon() {
   );
 }
 
+/** Seed hợp lệ cho shuffle Fisher–Yates (xem lib/shuffle.ts) */
+function randomShuffleSeed(): number {
+  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
+    const buf = new Uint32Array(2);
+    crypto.getRandomValues(buf);
+    const hi = Number(buf[0]);
+    const lo = Number(buf[1]);
+    let n = (hi * 0x100000000 + lo) % 2147483646;
+    if (n <= 0) n += 2147483645;
+    return n;
+  }
+  return Math.floor(Math.random() * 2147483645) + 1;
+}
+
 export function StudyPlayer({ cards, title }: StudyPlayerProps) {
   const [studyMode, setStudyMode] = useState<StudyMode>("flashcards");
   const [index, setIndex] = useState(0);
   const [showFlipAnswer, setShowFlipAnswer] = useState(false);
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
+  const [shuffleSeed, setShuffleSeed] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
 
   const masterOrder = useMemo(
-    () => (shuffleEnabled ? shuffleCards(cards, 2026) : cards),
-    [cards, shuffleEnabled],
+    () => (shuffleEnabled ? shuffleCards(cards, shuffleSeed) : cards),
+    [cards, shuffleEnabled, shuffleSeed],
   );
 
   const deck = useMemo(() => {
@@ -63,6 +85,19 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
     setShowFlipAnswer(false);
     setSelected(null);
   }, []);
+
+  const onShuffleToggle = useCallback(() => {
+    if (shuffleEnabled) {
+      setShuffleEnabled(false);
+    } else {
+      setShuffleSeed(randomShuffleSeed());
+      setShuffleEnabled(true);
+    }
+    setIndex(0);
+    resetCardState();
+    setCorrectCount(0);
+    setWrongCount(0);
+  }, [shuffleEnabled, resetCardState]);
 
   const goToMode = useCallback((mode: StudyMode) => {
     setStudyMode(mode);
@@ -192,22 +227,19 @@ export function StudyPlayer({ cards, title }: StudyPlayerProps) {
                 Trắc nghiệm
               </button>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:bg-[var(--color-surface-elevated)] dark:text-slate-200">
-              <input
-                type="checkbox"
-                checked={shuffleEnabled}
-                onChange={(event) => {
-                  setShuffleEnabled(event.target.checked);
-                  setIndex(0);
-                  resetCardState();
-                  setCorrectCount(0);
-                  setWrongCount(0);
-                }}
-                className="size-4 rounded border-slate-300"
-              />
-              <ShuffleIcon />
-              <span>Trộn</span>
-            </label>
+            <button
+              type="button"
+              onClick={onShuffleToggle}
+              aria-pressed={shuffleEnabled}
+              className={
+                shuffleEnabled
+                  ? "inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/45 bg-[var(--color-surface)] px-4 py-2 text-sm font-bold text-[var(--color-primary)] shadow-sm dark:bg-slate-900"
+                  : "inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-200"
+              }
+            >
+              <ShuffleIcon className={shuffleEnabled ? "opacity-100" : "opacity-55"} />
+              Trộn
+            </button>
           </div>
         </div>
 
